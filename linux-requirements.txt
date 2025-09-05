@@ -1,0 +1,7 @@
+# Linux-specific requirements
+# Core dependencies
+torch
+transformers
+fastapi
+uvicorn
+# Add other dependencies your project needs, excluding Windows-specific ones like pywin32
