@@ -24,6 +24,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # SQLAlchemy Models
+# 1. Bidirectional Relationship: It establishes a two-way (bidirectional) relationship between the UserModel and MessageModel classes.
+# 2. One-to-Many Relationship: It defines that one user can have many messages. This is a common database pattern where a parent entity (user) can have multiple child entities (messages).
+# 3. Attribute Creation: It creates a virtual attribute called "messages" on each UserModel instance, which will contain a collection of all the MessageModel instances associated with that user.
+# 4. Back Reference: The back_populates="user" parameter creates a matching reference in the other direction. It means that each MessageModel instance will have a "user" attribute that refers back to its parent UserModel.
 class UserModel(Base):
     __tablename__ = "users"
 
@@ -31,7 +35,7 @@ class UserModel(Base):
     email = Column(String, unique=True, index=True)
     name = Column(String)
     
-    # Relationship with MessageModel
+    # Create a two-way relationship with MessageModel
     messages = relationship("MessageModel", back_populates="user")
 
 class MessageModel(Base):
@@ -149,6 +153,9 @@ def get_users(db: Session = Depends(get_db)):
     users = db.query(UserModel).all()
     return users
 
+# 1. When you query a user with their messages using get_user_with_messages(), SQLAlchemy automatically loads all the messages associated with that user.
+# 2. The "UserWithMessages" Pydantic model includes a messages field that matches this relationship structure.
+# 3. In the database, this relationship is physically implemented through the "user_id" foreign key in the messages table, which references the id column in the users table.
 @app.get("/users/{email}", response_model=UserWithMessages)
 def get_user_with_messages(email: str, db: Session = Depends(get_db)):
     user = db.query(UserModel).filter(UserModel.email == email).first()
