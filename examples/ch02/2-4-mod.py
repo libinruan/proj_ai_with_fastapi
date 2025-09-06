@@ -78,7 +78,8 @@ class User(BaseModel):
 class UserWithMessages(User):
     messages: List[Message] = []
     
-    # Updated from orm_mode to from_attributes
+    # FastAPI automatically converts the SQLAlchemy model to the Pydantic model, which
+    # tells Pydantic to read attributes directly from the object
     model_config = ConfigDict(from_attributes=True)
 
 # Database dependency
@@ -136,7 +137,12 @@ app = FastAPI(lifespan=lifespan)
 def root():
     return {"message": "User Messages API"}
 
-
+# Note on the respnose_model:
+# response_model=UserWithMessages is specified in the decorator for the endpoint. This tells FastAPI to:
+# 1. Use the UserWithMessages Pydantic model to validate and serialize the response data
+# 2. Generate OpenAPI documentation based on this model
+# 3. Automatically convert the SQLAlchemy model instance (user) to the Pydantic model (UserWithMessages)
+# - The UserWithMessages model extends the User model and includes a messages field that contains a list of Message objects, which matches the relationship structure defined in your SQLAlchemy models.
 @app.get("/users/{email}/messages", response_model=List[Message])
 def get_user_messages(email: str, db: Session = Depends(get_db)):
     # Find the user by email
@@ -146,7 +152,7 @@ def get_user_messages(email: str, db: Session = Depends(get_db)):
     
     # Get the user's messages
     messages = db.query(MessageModel).filter(MessageModel.user_id == user.id).all()
-    return messages
+    return messages  # FastAPI converts MessageModel instances (SQLAlchemy objects) to Message Pydantic models (List[Message])
 
 @app.get("/users", response_model=List[User])
 def get_users(db: Session = Depends(get_db)):
@@ -158,10 +164,11 @@ def get_users(db: Session = Depends(get_db)):
 # 3. In the database, this relationship is physically implemented through the "user_id" foreign key in the messages table, which references the id column in the users table.
 @app.get("/users/{email}", response_model=UserWithMessages)
 def get_user_with_messages(email: str, db: Session = Depends(get_db)):
-    user = db.query(UserModel).filter(UserModel.email == email).first()
+    user = db.query(UserModel).filter(UserModel.email == email).first()  # retrieves a UserModel with its relationships
     if not user:
         raise HTTPException(status_code=404, detail=f"User with email {email} not found")
-    return user
+    return user  #* FastAPI converts UserModel (a SQLAlchemy model) to UserWithMessages (the Pydantic model), which is a JSON response that matches the structure defined in the Pydantic model, UserWithMessages.
+
 
 if __name__ == "__main__":
     """
