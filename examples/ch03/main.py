@@ -11,7 +11,8 @@ def root():
 
 @app.get("/generate/text")
 def serve_language_model_controller(prompt: str) -> str:
-    pipe = load_text_model()
+    # pipe = load_text_model()
+    pipe = load_text_model(model_name="ollama:qwen3:0.6b")
     output = generate_text(pipe, prompt)
     return output
 
