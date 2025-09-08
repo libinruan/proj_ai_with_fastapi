@@ -59,32 +59,60 @@ class OllamaModel:
         top_p: Optional[float] = None,
     ) -> List[Dict[str, str]]:
         """
-        Generate text using Ollama API
+        Generate text using Ollama API via the /api/chat endpoint
         
         Returns:
             List containing a dict with generated_text
         """
-        # Convert max_new_tokens to max_tokens for Ollama API
-        max_tokens = max_new_tokens if max_new_tokens is not None else 256
+        # Parse the prompt to extract messages
+        # The prompt is expected to be formatted by DummyTokenizer.apply_chat_template
+        messages = []
         
+        # Simple parsing of the formatted prompt to extract system and user messages
+        # This assumes the prompt was formatted by our DummyTokenizer
+        if "<|system|>" in prompt:
+            system_content = prompt.split("<|system|>\n")[1].split("\n<|user|>")[0].strip()
+            messages.append({"role": "system", "content": system_content})
+            
+        if "<|user|>" in prompt:
+            user_content = prompt.split("<|user|>\n")[1].split("\n<|assistant|>")[0].strip()
+            messages.append({"role": "user", "content": user_content})
+        
+        # If no messages were extracted, use the entire prompt as a user message
+        if not messages:
+            messages.append({"role": "user", "content": prompt})
+            
+        # Prepare the payload for the /api/chat endpoint
         payload = {
             "model": self.model_name,
-            "prompt": prompt,
+            "messages": messages,
             "temperature": temperature,
-            "max_tokens": max_tokens,
+            "stream": False,
         }
         
         # Add optional parameters if provided
+        if max_new_tokens is not None:
+            payload["max_tokens"] = max_new_tokens
         if top_p is not None:
             payload["top_p"] = top_p
         if top_k is not None:
             payload["top_k"] = top_k
             
-        response = requests.post(f"{self.base_url}/api/generate", json=payload)
+        # Use the /api/chat endpoint instead of /api/generate
+        response = requests.post(f"{self.base_url}/api/chat", json=payload)
         
         if response.status_code == 200:
             result = response.json()
-            return [{"generated_text": result.get("response", "")}]
+            # Extract the generated text from the message content
+            generated_text = result.get("message", {}).get("content", "")
+            
+            # Remove the <think> tags and content if present
+            if "<think>" in generated_text and "</think>" in generated_text:
+                think_start = generated_text.find("<think>")
+                think_end = generated_text.find("</think>") + len("</think>")
+                generated_text = generated_text[:think_start] + generated_text[think_end:].strip()
+            
+            return [{"generated_text": generated_text}]
         else:
             raise Exception(f"Ollama API error: {response.text}")
 
