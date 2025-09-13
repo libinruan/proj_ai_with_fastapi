@@ -22,6 +22,14 @@ Use Case: When you need to verify if a model is installed and get its metadata.
 
 # 2. Testing with the Chat API
 
+```
+The -X flag specifies the HTTP request method to use. 
+
+The -H flag sets an HTTP header in your request.
+
+The -d flag specifies the data to send in the request body. It contains the JSON payload with parameters for the model.
+```
+
 Ask:
 ```
 curl -X POST http://localhost:11434/api/chat \
@@ -50,7 +58,7 @@ Key Characteristics:
 - Response includes the <think> tags showing the model's internal reasoning process
 - Handles conversation context properly
 
-# 3. Testing with the Generate API
+# 3. Testing with the Generate API (using "prompt" rather than "messages")
 
 Ask:
 ```

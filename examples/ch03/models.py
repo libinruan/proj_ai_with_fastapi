@@ -48,7 +48,8 @@ class OllamaModel:
         self.model_name = model_name
         self.base_url = base_url
         self.tokenizer = DummyTokenizer()  # Placeholder for compatibility
-        
+    
+    
     def __call__(
         self, 
         prompt: str, 
@@ -144,7 +145,22 @@ class DummyTokenizer:
             
         return formatted_prompt
 
-
+"""
+1. In main.py, when you call the /generate/text endpoint, you only provide a simple text prompt:
+    ```
+    /generate/text?prompt=How do I create a FastAPI app?
+    ```
+2. The current generate_text function automatically
+    (1) Adds a system prompt to guide the model's behavior.
+    (2) Formats the prompt into a chat message structure expected by the model.
+        Wraps the text prompt in a structured format with roles using the tokenizer's apply_chat_template method:
+        ```
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
+        ]
+        ```
+"""
 def generate_text(
     pipe: Union[Pipeline, OllamaModel], 
     prompt: str, 
