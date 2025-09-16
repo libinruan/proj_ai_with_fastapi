@@ -115,6 +115,13 @@ ollama pull gemma:7b
 
 # Run a model
 ollama run llama2
+ollama run qwen3:0.6b --think=false
+```
+
+## Step 8: Run Qwen3 in no_thinking mode
+
+```shell
+ollama run qwen3:0.6b --think=false
 ```
 
 ## Common Issues and Troubleshooting
